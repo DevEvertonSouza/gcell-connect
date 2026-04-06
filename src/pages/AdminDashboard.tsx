@@ -489,7 +489,14 @@ const AdminDashboard = () => {
                             <Users size={18} className="text-primary" />
                           </div>
                           <div>
-                            <p className="font-heading font-bold text-foreground text-sm">{client.full_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-heading font-bold text-foreground text-sm">{client.full_name}</p>
+                              {(client as any).is_guest ? (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Convidado</Badge>
+                              ) : (
+                                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-1.5 py-0">Cadastrado</Badge>
+                              )}
+                            </div>
                             <p className="text-muted-foreground text-xs">{client.phone || "Sem telefone"}</p>
                           </div>
                         </div>
