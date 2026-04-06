@@ -19,7 +19,7 @@ const Differentials = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-            Por que escolher a <span className="gradient-text">GCell</span>?
+            Por que escolher a <span className="gradient-text">G GCell</span>?
           </h2>
         </motion.div>
 
