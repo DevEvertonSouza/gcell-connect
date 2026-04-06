@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import CreateOrderDialog from "@/components/admin/CreateOrderDialog";
+import CreateClientDialog from "@/components/admin/CreateClientDialog";
 import StoreBrands from "@/components/admin/StoreBrands";
 import StoreModels from "@/components/admin/StoreModels";
 import StoreProducts from "@/components/admin/StoreProducts";
@@ -323,6 +324,7 @@ const AdminDashboard = () => {
             <Button variant="outline" size="icon" onClick={fetchAll}>
               <RefreshCw size={14} />
             </Button>
+            <CreateClientDialog onCreated={fetchAll} />
             <CreateOrderDialog clients={clients} onCreated={fetchAll} />
           </div>
         </div>
