@@ -49,7 +49,8 @@ const CreateClientDialog = ({ onCreated }: CreateClientDialogProps) => {
       user_id: guestUserId,
       full_name: fullName,
       phone: phone || null,
-    });
+      is_guest: true,
+    } as any);
 
     if (error) {
       toast.error("Erro ao cadastrar cliente.");
