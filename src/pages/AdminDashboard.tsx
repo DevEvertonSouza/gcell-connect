@@ -117,6 +117,43 @@ const AdminDashboard = () => {
     setUpdatingId(null);
   };
 
+  const deleteOrder = async (orderId: string, orderNumber: string) => {
+    if (!confirm(`Excluir a ordem "${orderNumber}" permanentemente?`)) return;
+    setUpdatingId(orderId);
+    const { error } = await supabase.from("service_orders").delete().eq("id", orderId);
+    if (error) toast.error("Erro ao excluir ordem.");
+    else { toast.success(`Ordem ${orderNumber} excluída.`); fetchAll(); }
+    setUpdatingId(null);
+  };
+
+  const generateOrderSummary = (order: ServiceOrder) => {
+    const client = profileMap[order.user_id];
+    const text = [
+      `📋 *Ordem de Serviço: ${order.order_number}*`,
+      `📱 Aparelho: ${order.device}`,
+      `🔧 Problema: ${order.problem}`,
+      `📅 Entrada: ${format(new Date(order.entry_date), "dd/MM/yyyy")}`,
+      order.estimated_date ? `📆 Previsão: ${format(new Date(order.estimated_date), "dd/MM/yyyy")}` : null,
+      `📌 Status: ${statusLabels[order.status]}`,
+      order.notes ? `📝 Observações: ${order.notes}` : null,
+      client ? `\n👤 Cliente: ${client.full_name}` : null,
+      client?.phone ? `📞 Telefone: ${client.phone}` : null,
+    ].filter(Boolean).join("\n");
+    return text;
+  };
+
+  const copyOrderSummary = (order: ServiceOrder) => {
+    navigator.clipboard.writeText(generateOrderSummary(order));
+    toast.success("Resumo copiado para a área de transferência!");
+  };
+
+  const sendOrderWhatsApp = (order: ServiceOrder) => {
+    const client = profileMap[order.user_id];
+    const phone = client?.phone?.replace(/\D/g, "") || "";
+    const text = encodeURIComponent(generateOrderSummary(order));
+    window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+  };
+
   const confirmAppointment = async (id: string) => {
     const { error } = await supabase
       .from("appointments")
