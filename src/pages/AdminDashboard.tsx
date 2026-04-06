@@ -332,95 +332,140 @@ const AdminDashboard = () => {
         ) : (
           <>
             {/* ORDERS TAB */}
-            {tab === "orders" && (
-              <div className="space-y-3">
-                {filteredOrders.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-12">Nenhuma ordem encontrada.</p>
-                ) : filteredOrders.map(order => (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-card border border-border rounded-xl p-5 hover:border-primary/20 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Smartphone size={18} className="text-primary" />
+            {tab === "orders" && (() => {
+              const activeOrders = filteredOrders.filter(o => o.status !== "ready");
+              const readyOrders = filteredOrders.filter(o => o.status === "ready");
+
+              const renderOrderCard = (order: ServiceOrder) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card border border-border rounded-xl p-5 hover:border-primary/20 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Smartphone size={18} className="text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-heading font-bold text-foreground text-sm">{order.order_number}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[order.status]} text-primary-foreground`}>
+                            {statusLabels[order.status]}
+                          </span>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-heading font-bold text-foreground text-sm">{order.order_number}</span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[order.status]} text-primary-foreground`}>
-                              {statusLabels[order.status]}
+                        <p className="text-muted-foreground text-xs truncate">{order.device} — {order.problem}</p>
+                        {profileMap[order.user_id] && (
+                          <p className="text-muted-foreground text-xs mt-0.5">
+                            Cliente: {profileMap[order.user_id].full_name} {profileMap[order.user_id].phone && `| ${profileMap[order.user_id].phone}`}
+                          </p>
+                        )}
+                        {(() => {
+                          const deviceLower = order.device.toLowerCase();
+                          const matchedModel = partsModels.find(m => deviceLower.includes(m.name.toLowerCase()));
+                          if (!matchedModel) return null;
+                          const modelParts = parts.filter(p => p.model_id === matchedModel.id);
+                          if (modelParts.length === 0) return (
+                            <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                              Sem peças cadastradas para {matchedModel.name}
                             </span>
-                          </div>
-                          <p className="text-muted-foreground text-xs truncate">{order.device} — {order.problem}</p>
-                          {profileMap[order.user_id] && (
-                            <p className="text-muted-foreground text-xs mt-0.5">
-                              Cliente: {profileMap[order.user_id].full_name} {profileMap[order.user_id].phone && `| ${profileMap[order.user_id].phone}`}
-                            </p>
-                          )}
-                          {(() => {
-                            const deviceLower = order.device.toLowerCase();
-                            const matchedModel = partsModels.find(m => deviceLower.includes(m.name.toLowerCase()));
-                            if (!matchedModel) return null;
-                            const modelParts = parts.filter(p => p.model_id === matchedModel.id);
-                            if (modelParts.length === 0) return (
-                              <span className="inline-flex items-center gap-1 text-[10px] mt-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                Sem peças cadastradas para {matchedModel.name}
-                              </span>
-                            );
-                            const lowStock = modelParts.filter(p => p.quantity <= p.min_quantity);
-                            const inStock = modelParts.filter(p => p.quantity > p.min_quantity);
-                            return (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {inStock.length > 0 && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                                    <CheckCircle size={10} /> {inStock.length} peça(s) em estoque
-                                  </span>
-                                )}
-                                {lowStock.length > 0 && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
-                                    <AlertTriangle size={10} /> {lowStock.length} peça(s) precisam compra
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="relative">
-                          <select
-                            value={order.status}
-                            onChange={e => updateStatus(order.id, e.target.value as Enums<"service_status">)}
-                            disabled={updatingId === order.id}
-                            className="appearance-none bg-secondary text-secondary-foreground border border-border rounded-lg px-3 py-1.5 pr-8 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-                          >
-                            {allStatuses.map(s => (
-                              <option key={s} value={s}>{statusLabels[s]}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                        </div>
+                          );
+                          const lowStock = modelParts.filter(p => p.quantity <= p.min_quantity);
+                          const inStock = modelParts.filter(p => p.quantity > p.min_quantity);
+                          return (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {inStock.length > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                  <CheckCircle size={10} /> {inStock.length} peça(s) em estoque
+                                </span>
+                              )}
+                              {lowStock.length > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+                                  <AlertTriangle size={10} /> {lowStock.length} peça(s) precisam compra
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
-                    <div className="flex gap-6 mt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="relative">
+                        <select
+                          value={order.status}
+                          onChange={e => updateStatus(order.id, e.target.value as Enums<"service_status">)}
+                          disabled={updatingId === order.id}
+                          className="appearance-none bg-secondary text-secondary-foreground border border-border rounded-lg px-3 py-1.5 pr-8 text-xs font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                          {allStatuses.map(s => (
+                            <option key={s} value={s}>{statusLabels[s]}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      </div>
+                      <Button variant="outline" size="icon" className="h-8 w-8" title="Copiar resumo" onClick={() => copyOrderSummary(order)}>
+                        <Copy size={14} />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" title="Enviar via WhatsApp" onClick={() => sendOrderWhatsApp(order)}>
+                        <Send size={14} />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Excluir ordem"
+                        disabled={updatingId === order.id}
+                        onClick={() => deleteOrder(order.id, order.order_number)}
+                      >
+                        {updatingId === order.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex gap-6 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} /> {format(new Date(order.entry_date), "dd/MM/yyyy")}
+                    </span>
+                    {order.estimated_date && (
                       <span className="flex items-center gap-1">
-                        <Clock size={12} /> {format(new Date(order.entry_date), "dd/MM/yyyy")}
+                        Previsão: {format(new Date(order.estimated_date), "dd/MM/yyyy")}
                       </span>
-                      {order.estimated_date && (
-                        <span className="flex items-center gap-1">
-                          Previsão: {format(new Date(order.estimated_date), "dd/MM/yyyy")}
-                        </span>
-                      )}
-                      {order.notes && <span>Obs: {order.notes}</span>}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+                    )}
+                    {order.notes && <span>Obs: {order.notes}</span>}
+                  </div>
+                </motion.div>
+              );
+
+              return (
+                <div className="space-y-8">
+                  {/* Em andamento */}
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+                      <Smartphone size={14} className="text-primary" />
+                      Em Andamento ({activeOrders.length})
+                    </h3>
+                    {activeOrders.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8 bg-card border border-border rounded-xl">Nenhuma ordem em andamento.</p>
+                    ) : (
+                      <div className="space-y-3">{activeOrders.map(renderOrderCard)}</div>
+                    )}
+                  </div>
+
+                  {/* Prontas */}
+                  <div>
+                    <h3 className="text-sm font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+                      <PackageCheck size={14} className="text-emerald-500" />
+                      Prontas para Retirada ({readyOrders.length})
+                    </h3>
+                    {readyOrders.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8 bg-card border border-border rounded-xl">Nenhuma ordem pronta.</p>
+                    ) : (
+                      <div className="space-y-3">{readyOrders.map(renderOrderCard)}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CLIENTS TAB */}
             {tab === "clients" && (
